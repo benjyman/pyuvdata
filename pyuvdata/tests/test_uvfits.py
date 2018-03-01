@@ -255,3 +255,30 @@ def test_readMSWriteUVFits_CASAHistory():
     nt.assert_equal(ms_uv, uvfits_uv)
     del(uvfits_uv)
     del(ms_uv)
+
+
+def test_flag_writeUVFits():
+    """
+    Read in a uvfits file and modify its flag array.
+    Write out the changes, read back in, and verify equality.
+    """
+    uv1 = UVData()
+    uv2 = UVData()
+    infile = os.path.join(DATA_PATH, 'day2_TDEM0003_10s_norx_1src_1spw.uvfits')
+    testfile = os.path.join(DATA_PATH, 'test/outtest_uvfits')
+    uv1.read_uvfits(infile)
+
+    # Unflag half the frequencies and flag the other half
+    uv1.flag_array[:, :, :(uv1.Nfreqs / 2), :] = 0
+    uv1.flag_array[:, :, (uv1.Nfreqs / 2):, :] = 1
+
+    # Check that this type of assignment is legit
+    assert(not np.any(uv1.flag_array[:, :, :(uv1.Nfreqs / 2), :]))
+    assert(np.all(uv1.flag_array[:, :, (uv1.Nfreqs / 2):, :]))
+
+    uv1.write_uvfits(testfile)
+    uv2.read_uvfits(testfile)
+
+    # Repeat check above to show that the writing process was ok
+    assert(not np.any(uv2.flag_array[:, :, :(uv2.Nfreqs / 2), :]))
+    assert(np.all(uv2.flag_array[:, :, (uv2.Nfreqs / 2):, :]))
