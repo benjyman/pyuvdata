@@ -264,7 +264,7 @@ def test_flag_writeUVFits():
     """
     uv1 = UVData()
     uv2 = UVData()
-    infile = os.path.join(DATA_PATH, 'day2_TDEM0003_10s_norx_1src_1spw.uvfits')
+    infile = '/Users/mike_e_dubs/MWA/Data/smaller_uvfits/1061313128_t18_t24_flag_mod.uvfits'
     testfile = os.path.join(DATA_PATH, 'test/outtest_uvfits')
     uv1.read_uvfits(infile)
 
@@ -278,6 +278,8 @@ def test_flag_writeUVFits():
 
     uv1.write_uvfits(testfile)
     uv2.read_uvfits(testfile)
+
+    nt.assert_equal(uv1, uv2)
 
     # Repeat check above to show that the writing process was ok
     assert(not np.any(uv2.flag_array[:, :, :(uv2.Nfreqs / 2), :]))
