@@ -279,6 +279,7 @@ def test_flag_writeUVFits():
     uv1.write_uvfits(testfile)
     uv2.read_uvfits(testfile)
 
+    assert(np.all(np.array_equal(uv1.baseline_array, uv2.baseline_array)))
     nt.assert_equal(uv1, uv2)
 
     # Repeat check above to show that the writing process was ok
