@@ -46,6 +46,11 @@ class UVBeam(UVBase):
         self._Naxes_vec = uvp.UVParameter('Naxes_vec', description=desc,
                                           expected_type=int, acceptable_vals=[2, 3])
 
+        desc = ('Number of basis vectors components specified at each pixel, options '
+                'are 2 or 3.  Only required for E-field beams.')
+        self._Ncomponents_vec = uvp.UVParameter('Ncomponents_vec', description=desc,
+                                                expected_type=int, acceptable_vals=[2, 3],required=False)
+
         desc = ('Pixel coordinate system, options are: "' +
                 '", "'.join(self.coordinate_system_dict.keys()) + '".')
         for key in self.coordinate_system_dict:
@@ -104,11 +109,11 @@ class UVBeam(UVBase):
                 'electric field values are recorded in the pixel coordinate system. '
                 'Not required if beam_type is "power". The shape depends on the '
                 'pixel_coordinate_system, if it is "healpix", the shape is: '
-                '(Naxes_vec, 2, Npixels), otherwise it is (Naxes_vec, 2, Naxes2, Naxes1)')
+                '(Naxes_vec, Ncomponents_vec, Npixels), otherwise it is (Naxes_vec, Ncomponents_vec, Naxes2, Naxes1)')
         self._basis_vector_array = uvp.UVParameter('basis_vector_array',
                                                    description=desc, required=False,
                                                    expected_type=np.float,
-                                                   form=('Naxes_vec', 2, 'Naxes2', 'Naxes1'),
+                                                   form=('Naxes_vec','Ncomponents_vec', 'Naxes2', 'Naxes1'),
                                                    acceptable_range=(0, 1),
                                                    tols=1e-3)
 
@@ -370,7 +375,7 @@ class UVBeam(UVBase):
             self._ordering.required = True
             self._Npixels.required = True
             self._pixel_array.required = True
-            self._basis_vector_array.form = ('Naxes_vec', 2, 'Npixels')
+            self._basis_vector_array.form = ('Naxes_vec', 'Ncomponents_vec', 'Npixels')
             if self.beam_type == "power":
                 self._data_array.form = ('Naxes_vec', 'Nspws', 'Npols', 'Nfreqs',
                                          'Npixels')
@@ -389,7 +394,7 @@ class UVBeam(UVBase):
             self._ordering.required = False
             self._Npixels.required = False
             self._pixel_array.required = False
-            self._basis_vector_array.form = ('Naxes_vec', 2, 'Naxes2', 'Naxes1')
+            self._basis_vector_array.form = ('Naxes_vec', 'Ncomponents_vec', 'Naxes2', 'Naxes1')
             if self.beam_type == "power":
                 self._data_array.form = ('Naxes_vec', 'Nspws', 'Npols', 'Nfreqs',
                                          'Naxes2', 'Naxes1')
@@ -401,6 +406,7 @@ class UVBeam(UVBase):
         """Set beam_type to 'efield' and adjust required parameters."""
         self.beam_type = 'efield'
         self._Naxes_vec.acceptable_vals = [2, 3]
+        self._Ncomponents_vec.required = True
         self._basis_vector_array.required = True
         self._Nfeeds.required = True
         self._feed_array.required = True
@@ -571,9 +577,11 @@ class UVBeam(UVBase):
         from scipy import interpolate
         if self.pixel_coordinate_system != 'az_za':
             raise ValueError('pixel_coordinate_system must be "az_za"')
-        if self.beam_type != 'power':
-            raise ValueError('healpix conversion not yet defined for efield')
-
+        #if self.beam_type != 'power':
+        #    raise ValueError('healpix conversion not yet defined for efield')
+        if self.basis_vector_array is not None:
+            """ Basis vector operations """
+        
         if nside is None:
             min_res = np.min(np.array([np.diff(self.axis1_array)[0], np.diff(self.axis2_array)[0]]))
             nside_min_res = np.sqrt(3 / np.pi) * np.radians(60.) / min_res
