@@ -612,8 +612,8 @@ class UVBeam(UVBase):
             """ Input basis vectors are not aligned to the native theta/phi
             coordinate system """
         else:
-        """ The basis vector array comes in defined at the rectangular grid.
-        Redefine it for the healpix centers """
+            """ The basis vector array comes in defined at the rectangular grid.
+            Redefine it for the healpix centers """
             self.basis_vector_array = np.zeros([self.Naxes_vec,self.Ncomponents_vec,self.Npixels])
             self.basis_vector_array[0,0,:] = np.ones(self.Npixels) # theta hat
             self.basis_vector_array[1,1,:] = np.ones(self.Npixels) # phi hat
