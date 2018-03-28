@@ -610,6 +610,8 @@ class UVBeam(UVBase):
 
         
         """ basis_vectors comes in defined at the rectangular grid.  need it for the healpix centers """
+
+        """ Still gotta do it """
         
         
         for index0 in range(self.Naxes_vec):
