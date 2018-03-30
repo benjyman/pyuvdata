@@ -49,7 +49,8 @@ class UVBeam(UVBase):
         desc = ('Number of basis vectors components specified at each pixel, options '
                 'are 2 or 3.  Only required for E-field beams.')
         self._Ncomponents_vec = uvp.UVParameter('Ncomponents_vec', description=desc,
-                                                expected_type=int, acceptable_vals=[2, 3],required=False)
+                                                expected_type=int, acceptable_vals=[2, 3],
+                                                required=False)
 
         desc = ('Pixel coordinate system, options are: "' +
                 '", "'.join(self.coordinate_system_dict.keys()) + '".')
@@ -109,11 +110,12 @@ class UVBeam(UVBase):
                 'electric field values are recorded in the pixel coordinate system. '
                 'Not required if beam_type is "power". The shape depends on the '
                 'pixel_coordinate_system, if it is "healpix", the shape is: '
-                '(Naxes_vec, Ncomponents_vec, Npixels), otherwise it is (Naxes_vec, Ncomponents_vec, Naxes2, Naxes1)')
+                '(Naxes_vec, Ncomponents_vec, Npixels), otherwise it is '
+                '(Naxes_vec, Ncomponents_vec, Naxes2, Naxes1)')
         self._basis_vector_array = uvp.UVParameter('basis_vector_array',
                                                    description=desc, required=False,
                                                    expected_type=np.float,
-                                                   form=('Naxes_vec','Ncomponents_vec', 'Naxes2', 'Naxes1'),
+                                                   form=('Naxes_vec', 'Ncomponents_vec', 'Naxes2', 'Naxes1'),
                                                    acceptable_range=(0, 1),
                                                    tols=1e-3)
 
@@ -421,6 +423,7 @@ class UVBeam(UVBase):
         self.beam_type = 'power'
         self._Naxes_vec.acceptable_vals = [1, 2, 3]
         self._basis_vector_array.required = False
+        self._Ncomponents_vec.required = False
         self._Nfeeds.required = False
         self._feed_array.required = False
         self._Npols.required = True
@@ -551,6 +554,7 @@ class UVBeam(UVBase):
         self.feed_array = None
         if not keep_basis_vector:
             self.basis_vector_array = None
+            self.Ncomponents_vec = None
 
         if run_check:
             self.check(check_extra=check_extra,
@@ -577,8 +581,6 @@ class UVBeam(UVBase):
         from scipy import interpolate
         if self.pixel_coordinate_system != 'az_za':
             raise ValueError('pixel_coordinate_system must be "az_za"')
-        #if self.beam_type != 'power':
-        #    raise ValueError('healpix conversion not yet defined for efield')
         if self.basis_vector_array is not None:
             """ Basis vector operations """
 
@@ -608,23 +610,26 @@ class UVBeam(UVBase):
         hpx_theta, hpx_phi = hp.pix2ang(nside, pixels)
         nearest_pix_dist = np.zeros(npix)
 
-        if (np.any(basis_vector_array[0,1,:]>0) or np.any(basis_vector_array[1,0,:]>0)):
-            """ Input basis vectors are not aligned to the native theta/phi
-            coordinate system """
-        else:
-            """ The basis vector array comes in defined at the rectangular grid.
-            Redefine it for the healpix centers """
-            self.basis_vector_array = np.zeros([self.Naxes_vec,self.Ncomponents_vec,self.Npixels])
-            self.basis_vector_array[0,0,:] = np.ones(self.Npixels) # theta hat
-            self.basis_vector_array[1,1,:] = np.ones(self.Npixels) # phi hat
+        if self.basis_vector_array is not None:
+            if (np.any(self.basis_vector_array[0, 1, :] > 0) or
+                    np.any(self.basis_vector_array[1, 0, :] > 0)):
+                """ Input basis vectors are not aligned to the native theta/phi
+                coordinate system """
+                pass
+            else:
+                """ The basis vector array comes in defined at the rectangular grid.
+                Redefine it for the healpix centers """
+                self.basis_vector_array = np.zeros([self.Naxes_vec, self.Ncomponents_vec, self.Npixels])
+                self.basis_vector_array[0, 0, :] = np.ones(self.Npixels)  # theta hat
+                self.basis_vector_array[1, 1, :] = np.ones(self.Npixels)  # phi hat
 
         for index0 in range(self.Naxes_vec):
             for index1 in range(self.Nspws):
                 # Npols is only defined for power beams.  For E-field beams need Nfeeds.
                 if self.beam_type == 'power':
-                    Npol_feeds = sef.Npols
+                    Npol_feeds = self.Npols
                 else:
-                    Npol_feeds = sef.Nfeeds
+                    Npol_feeds = self.Nfeeds
                 for index2 in range(Npol_feeds):
                     for index3 in range(self.Nfreqs):
 
